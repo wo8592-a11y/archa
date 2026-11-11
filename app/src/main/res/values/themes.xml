@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.Wo8592" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.wo8592" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <item name="colorPrimary">@color/primary</color>
         <item name="colorPrimaryVariant">@color/primary_variant</item>
@@ -12,7 +12,7 @@
     </style>
 
     <!-- Splash Theme -->
-    <style name="Theme.Wo8592.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.wo8592.Splash" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">@drawable/bg_splash</item>
         <item name="android:statusBarColor">@color/status_bar_color</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
