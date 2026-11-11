@@ -7,12 +7,14 @@ on:
       - "v*"
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch: # GitHub 웹 UI에서 'Run workflow' 버튼을 눌러 언제든지 수동 빌드 가능
+  workflow_dispatch:
 
 jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
+    env:
+      GRADLE_VERSION: "8.7"
 
     steps:
       - name: Checkout Code
@@ -24,35 +26,47 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Ensure Gradle Wrapper Exists
+      - name: Prepare Gradle Wrapper
         run: |
-          mkdir -p gradle/wrapper
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "gradle-wrapper.jar not found, fetching wrapper..."
-            curl -fL -s "https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar || true
-            if [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
-              echo "Downloading gradle zip to extract wrapper..."
-              curl -fL -s "https://services.gradle.org/distributions/gradle-8.7-bin.zip" -o gradle-tmp.zip
-              unzip -q -j gradle-tmp.zip "*/lib/gradle-wrapper-*.jar" -d gradle/wrapper/
-              mv gradle/wrapper/gradle-wrapper-*.jar gradle/wrapper/gradle-wrapper.jar
-              rm -f gradle-tmp.zip
-            fi
-          fi
           chmod +x gradlew
+          mkdir -p gradle/wrapper
+          
+          # Gradle 배포본 다운로드 후 wrapper.jar 추출
+          wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" \
+               -O /tmp/gradle-bin.zip
+          
+          # 여러 경로 패턴 시도
+          unzip -q /tmp/gradle-bin.zip -d /tmp/gradle-dist/
+          
+          # gradle-wrapper.jar 를 lib 폴더에서 찾기
+          WRAPPER_JAR=$(find /tmp/gradle-dist/ -name "gradle-wrapper*.jar" 2>/dev/null | head -n 1)
+          
+          if [ -n "$WRAPPER_JAR" ] && [ -s "$WRAPPER_JAR" ]; then
+            cp "$WRAPPER_JAR" gradle/wrapper/gradle-wrapper.jar
+            echo "✅ gradle-wrapper.jar 복사 성공: $WRAPPER_JAR ($(wc -c < gradle/wrapper/gradle-wrapper.jar) bytes)"
+          else
+            echo "❌ zip에서 추출 실패, Gradle binary 직접 사용..."
+            /tmp/gradle-dist/gradle-${GRADLE_VERSION}/bin/gradle wrapper \
+                --gradle-version ${GRADLE_VERSION} \
+                --project-dir .
+          fi
+          
+          ls -lh gradle/wrapper/
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Verify Generated APK
+      - name: Show APK info
         run: |
-          ls -lh app/build/outputs/apk/debug/
-          APK_FILE=$(find app/build/outputs/apk/debug/ -name "*.apk" | head -n 1)
-          echo "Generated APK: $APK_FILE"
+          find app/build/outputs/ -name "*.apk" | while read apk; do
+            echo "APK: $apk"
+            ls -lh "$apk"
+          done
 
-      - name: Upload Debug APK as Artifact
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: wo8592-webview-debug-apk
