@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#FF6B6B</color>
+    <color name="primary_variant">#FA5252</color>
+    <color name="secondary">#4DABF7</color>
+    <color name="accent">#FFA94D</color>
+    <color name="background">#FFFFFF</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="text_primary">#212529</color>
+    <color name="text_secondary">#868E96</color>
+    <color name="status_bar_color">#FFFFFF</color>
+    <color name="progress_bar_color">#FF6B6B</color>
+    <color name="error_btn_bg">#FF6B6B</color>
+</resources>
